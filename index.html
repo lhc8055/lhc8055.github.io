@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 新增：取消两指放大缩小，锁定缩放比例 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <!-- 新增：百度浏览器识别+自动跳转系统浏览器 -->
+    <script>
+        // 匹配百度浏览器特征（覆盖移动端/PC端百度浏览器）
+        const ua = navigator.userAgent.toLowerCase();
+        const isBaiduBrowser = ua.includes('baidu') || ua.includes('baidubrowser') || ua.includes('bdbrowser');
+        // 百度浏览器打开则触发跳转（唤起系统默认浏览器）
+        if (isBaiduBrowser) {
+            // 跳转目标为原网页地址（让系统浏览器打开当前页面内容），可替换为指定链接
+            window.location.href = window.location.href;
+            // 兼容移动端唤起逻辑，强制触发系统浏览器打开
+            setTimeout(() => {
+                if (navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/i)) {
+                    window.location.href = 'http://' + window.location.host + window.location.pathname;
+                }
+            }, 100);
+        }
+    </script>
+    <title>王者代打 透明头像 重复名</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* 基础毛玻璃（初始模糊较弱，滑动时增强） */
+            .glass {
+                @apply backdrop-blur-sm bg-white/15 border border-white/30;
+            }
+            /* 滑动模糊增强类（开启硬件加速） */
+            .scroll-blur {
+                will-change: backdrop-filter;
+                transition: backdrop-filter 300ms cubic-bezier(0.33, 1, 0.68, 1);
+            }
+            /* 液态玻璃按钮（统一iOS动画曲线） */
+            .liquid-btn {
+                @apply relative overflow-hidden rounded-full px-6 py-3 font-medium text-white 
+                       hover:scale-95 hover:shadow-lg hover:shadow-white/20
+                       active:scale-90 active:shadow-inner active:shadow-black/10;
+                background: rgba(59, 130, 246, 0.8);
+                transition: transform 300ms cubic-bezier(0.33, 1, 0.68, 1), 
+                            box-shadow 300ms cubic-bezier(0.33, 1, 0.68, 1);
+            }
+            .liquid-btn::before {
+                content: "";
+                @apply absolute top-0 left-0 w-20 h-full bg-white/20 -translate-x-full skew-x-12;
+                transition: transform 500ms cubic-bezier(0.33, 1, 0.68, 1);
+                will-change: transform;
+            }
+            .liquid-btn:hover::before {
+                @apply translate-x-full;
+            }
+            /* iOS全局圆角 */
+            .ios-radius {
+                @apply rounded-2xl;
+            }
+            /* 提示框（iOS动画曲线） */
+            .alert-mask {
+                @apply fixed inset-0 z-[99999] flex items-center justify-center 
+                       bg-black/30 backdrop-blur-sm transition-all duration-500 
+                       ease-[cubic-bezier(0.33,1,0.68,1)];
+            }
+            .alert-content {
+                @apply ios-radius p-8 max-w-sm w-[90%] text-center 
+                       backdrop-blur-xl bg-primary/20 border-white/40 
+                       shadow-xl shadow-primary/30 text-lg transition-all 
+                       duration-500 ease-[cubic-bezier(0.33,1,0.68,1)];
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#FBBF24',
+                        accent: '#EC4899',
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen text-white overflow-x-hidden bg-[url('https://i.imgs.ovh/2025/11/22/CFGKtX.jpeg')] bg-cover bg-center bg-fixed">
+    <!-- 提示框 -->
+    <div id="entryAlert" class="alert-mask">
+        <div class="alert-content">
+            <p class="opacity-95">部分浏览器可能会提示风险，请放心使用，感谢您的信任😊</p>
+        </div>
+    </div>
+    <!-- 头部导航（滑动时模糊增强） -->
+    <header class="sticky top-0 z-50 glass ios-radius mx-4 mt-4 p-4 shadow-lg scroll-blur">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-2xl font-bold tracking-tight">王者荣耀</h1>
+        </div>
+    </header>
+    <!-- 静态内容区域 -->
+    <section class="relative h-[320px] md:h-[420px] mx-4 mt-4 ios-radius overflow-hidden glass">
+        <div class="w-full h-full flex flex-col items-center justify-center text-center p-6">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">S41新赛季开启</h2>
+            <p class="text-lg md:text-xl opacity-90 mb-6 max-w-md">「排位赛，巅峰赛，冲标」 纯绿代打，高效上分</p>
+            <button class="liquid-btn">点击下单</button>
+        </div>
+    </section>
+    <!-- 核心区域 -->
+    <section class="container mx-auto px-4 py-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-8 text-center tracking-tight">精品服务</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 卡片1：透明头像重复名 -->
+            <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/25/CbqkMA.jpeg')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                <div class="flex flex-col justify-center flex-grow">
+                    <h3 class="text-xl font-bold mb-2">透明头像，重复名</h3>
+                    <p class="opacity-80 text-sm mb-4">代改名字头像，透明头像支持主流腾讯游戏</p>
+                    <button class="w-full liquid-btn text-sm py-2">点击修改</button>
+                </div>
+            </div>
+            <!-- 卡片2：王者荣耀 改战区（已重新替换为指定图片） -->
+            <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                <!-- 替换为用户指定的有效图片链接 -->
+                <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/25/Cbmckx.png')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                <div class="flex flex-col justify-center flex-grow">
+                    <h3 class="text-xl font-bold mb-2">王者荣耀改战区</h3>
+                    <p class="opacity-80 text-sm mb-4">代查战力，修改战区，轻松拿排名！</p>
+                    <button class="w-full liquid-btn bg-accent text-sm py-2">查看详细</button>
+                </div>
+            </div>
+            <!-- 卡片3：全英雄连招库 -->
+            <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/22/CFmmZh.jpeg')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                <div class="flex flex-col justify-center flex-grow">
+                    <h3 class="text-xl font-bold mb-2">全英雄连招库</h3>
+                    <p class="opacity-80 text-sm mb-4">版本热门英雄实战连招+出装推荐</p>
+                    <button class="w-full liquid-btn bg-secondary text-black text-sm py-2">获取连招</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- 健康提示框 -->
+    <a href="http://res.abeim.cn/api-qq.chat?qq=1497322645" target="_blank" class="fixed bottom-6 right-6 glass ios-radius p-4 shadow-lg hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]">
+        <div class="flex items-center gap-3">
+            <span class="text-secondary font-bold">👉🏻</span>
+            <p class="text-sm opacity-90">点击联系客服</p>
+        </div>
+    </a>
+    <!-- 底部导航 -->
+    <footer class="glass ios-radius mx-4 mb-4 p-4 shadow-lg scroll-blur">
+        <div class="container mx-auto flex justify-center items-center h-full">
+            <p class="text-center text-sm opacity-70">
+                © 2025 王者荣耀 | 健康游戏 理性消费
+            </p>
+        </div>
+    </footer>
+    <script>
+        // 获取今日日期（格式：YYYY-MM-DD）
+        function getTodayDate() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+        // 滚动模糊效果优化（iOS流畅曲线+硬件加速）
+        let lastScrollY = 0;
+        // 节流+requestAnimationFrame确保滑动流畅
+        const rafThrottle = (func) => {
+            let isRunning = false;
+            return (...args) => {
+                if (!isRunning) {
+                    window.requestAnimationFrame(() => {
+                        func.apply(this, args);
+                        isRunning = false;
+                    });
+                    isRunning = true;
+                }
+            };
+        };
+        // 动态调整滑动时的高斯模糊强度
+        const handleScrollBlur = () => {
+            const scrollY = window.scrollY;
+            // 模糊值随滚动距离递增（初始4px → 最大20px，滑动更明显）
+            const blurValue = Math.min(4 + (scrollY / 80) * 16, 20);
+            // 给所有带scroll-blur的元素同步修改模糊度
+            document.querySelectorAll('.scroll-blur').forEach(el => {
+                el.style.backdropFilter = `blur(${blurValue}px)`;
+            });
+            lastScrollY = scrollY;
+        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const alertMask = document.getElementById('entryAlert');
+            const alertContent = alertMask.querySelector('.alert-content');
+            const today = getTodayDate();
+            const lastAlertDate = localStorage.getItem('lastAlertDate');
+            // 今日仅弹窗一次
+            if (lastAlertDate === today) {
+                alertMask.style.display = 'none';
+            } else {
+                localStorage.setItem('lastAlertDate', today);
+            }
+            // 绑定滚动模糊事件
+            window.addEventListener('scroll', rafThrottle(handleScrollBlur));
+            // 初始化模糊状态
+            handleScrollBlur();
+            // 提示框流畅关闭动画
+            alertMask.addEventListener('click', () => {
+                alertMask.style.opacity = '0';
+                alertContent.style.transform = 'scale(0.95)';
+                alertContent.style.opacity = '0';
+                
+                setTimeout(() => {
+                    alertMask.style.display = 'none';
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
