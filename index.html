@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王者代打 透明头像 重复名 - 热门英雄连招库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        /* 全局样式 - 确保动画关键帧优先生效 */
+        @keyframes ripple {
+            0% {
+                transform: scale(0);
+                opacity: 0.9;
+                backdrop-filter: blur(3px);
+            }
+            70% {
+                transform: scale(1.5);
+                opacity: 0.3;
+                backdrop-filter: blur(6px);
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0.9;
+                backdrop-filter: blur(3px);
+            }
+        }
+        /* 基础毛玻璃（初始模糊较弱，滑动时增强） */
+        .glass {
+            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        /* 滑动模糊增强类（开启硬件加速） */
+        .scroll-blur {
+            will-change: backdrop-filter;
+            transition: backdrop-filter 300ms cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        /* 液态玻璃按钮（统一iOS动画曲线） */
+        .liquid-btn {
+            position: relative;
+            overflow: hidden;
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(59, 130, 246, 0.9);
+            transition: transform 300ms cubic-bezier(0.33, 1, 0.68, 1), 
+                        box-shadow 300ms cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        .liquid-btn:hover {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        .liquid-btn:active {
+            transform: scale(0.9);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .liquid-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-100%) skewX(-12deg);
+            transition: transform 500ms cubic-bezier(0.33, 1, 0.68, 1);
+            will-change: transform;
+        }
+        .liquid-btn:hover::before {
+            transform: translateX(100%);
+        }
+        /* iOS全局圆角 */
+        .ios-radius {
+            border-radius: 1rem;
+        }
+        /* 提示框（iOS动画曲线） */
+        .alert-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            transition: all 500ms cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        .alert-content {
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 28rem;
+            width: 90%;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            font-size: 1.125rem;
+            transition: all 500ms cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        /* 液态玻璃加载动画 - 三层错位波纹（优化可见性） */
+        .loading-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 999999; /* 最高层级，确保不被遮挡 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 300ms ease;
+        }
+        .loading-container {
+            position: relative;
+            width: 6rem;
+            height: 6rem;
+        }
+        .ripple {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background-color: rgba(59, 130, 246, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            animation: ripple 1s cubic-bezier(0.33, 1, 0.68, 1) infinite;
+            will-change: transform, opacity, backdrop-filter;
+        }
+        .ripple-1 { animation-delay: 0ms; }
+        .ripple-2 { animation-delay: 150ms; }
+        .ripple-3 { animation-delay: 300ms; }
+        /* 容器样式补全（调整宽度更紧凑） */
+        .container {
+            width: 100%;
+            max-width: 900px; /* 缩小主容器宽度 */
+            margin: 0 auto;
+            padding-right: 1rem;
+            padding-left: 1rem;
+        }
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 850px;
+            }
+        }
+        /* 连招卡片样式 */
+        .combo-card { transition: transform 300ms ease; cursor: pointer; }
+        .combo-card:hover { transform: translateY(-5px); }
+        /* 页面模块切换样式 */
+        .page-module { transition: opacity 500ms ease, transform 500ms ease; }
+        .page-hidden { opacity: 0; pointer-events: none; display: none; }
+        .page-visible { opacity: 1; pointer-events: auto; display: block; }
+
+        /* ========== 播放器模块样式（调整宽度更协调） ========== */
+        .player-module {
+            min-height: calc(100vh - 12rem);
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        .plyr-container {
+            max-width: 900px; /* 缩小播放器容器宽度 */
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 20px 15px; /* 减少内边距 */
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+        .player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.7);
+            margin-bottom: 15px; /* 减少间距 */
+        }
+        #plyr-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .touch-slide-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: none;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .player-title {
+            text-align: center;
+            color: white;
+            margin-bottom: 8px;
+            font-size: 1.6em; /* 缩小标题字号 */
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .player-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        .player-features {
+            display: grid;
+            gap: 12px; /* 减少卡片间距 */
+        }
+        .player-feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 16px; /* 减少卡片内边距 */
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .player-feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        .player-feature-card h3 {
+            color: white;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-feature-card p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+        /* 自定义Plyr控件，适配透明风格 */
+        .plyr {
+            --plyr-color-main: #FBBF24;
+            --plyr-control-spacing: 10px;
+            --plyr-control-icon-size: 16px;
+            --plyr-video-controls-background: linear-gradient(transparent, rgba(0,0,0,0.6));
+        }
+        /* 返回按钮适配 */
+        .back-btn-container {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#FBBF24',
+                        accent: '#EC4899',
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen text-white overflow-x-hidden bg-[url('https://i.imgs.ovh/2025/11/22/CFGKtX.jpeg')] bg-cover bg-center bg-fixed">
+    <!-- 液态玻璃加载动画容器（修复层级和样式） -->
+    <div id="loadingMask" class="loading-mask">
+        <div class="loading-container">
+            <div class="ripple ripple-1"></div>
+            <div class="ripple ripple-2"></div>
+            <div class="ripple ripple-3"></div>
+        </div>
+    </div>
+    <!-- 提示框 -->
+    <div id="entryAlert" class="alert-mask">
+        <div class="alert-content">
+            <p class="opacity-95">部分浏览器可能会提示风险，请放心使用，感谢您的信任😊</p>
+        </div>
+    </div>
+    <!-- 头部导航（滑动时模糊增强） -->
+    <header class="sticky top-0 z-50 glass ios-radius mx-4 mt-4 p-4 shadow-lg scroll-blur">
+        <div class="container mx-auto flex justify-center items-center">
+            <h1 class="text-2xl font-bold tracking-tight" id="mainTitle">王者荣耀</h1>
+            <h1 class="text-2xl font-bold tracking-tight page-hidden" id="comboTitle">热门英雄连招库</h1>
+            <h1 class="text-2xl font-bold tracking-tight page-hidden" id="playerTitle">吕布连招视频教程</h1>
+        </div>
+    </header>
+
+    <!-- 主页面核心模块（默认显示） -->
+    <div id="mainModule" class="page-module page-visible">
+        <!-- 静态内容区域 -->
+        <section class="relative h-[320px] md:h-[420px] mx-4 mt-4 ios-radius overflow-hidden glass">
+            <div class="w-full h-full flex flex-col items-center justify-center text-center p-6">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">S41新赛季开启</h2>
+                <p class="text-lg md:text-xl opacity-90 mb-6 max-w-md">「排位赛，巅峰赛，冲标」 纯绿代打，高效上分</p>
+                <!-- 点击下单跳转链接（已修改） -->
+                <a href="https://qm.qq.com/q/bXmjB8c9ag" target="_blank" class="liquid-btn">点击下单</a>
+            </div>
+        </section>
+        <!-- 核心服务区域 -->
+        <section class="container mx-auto px-4 py-12">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-center tracking-tight">精品服务</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 卡片1：透明头像重复名 -->
+                <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                    <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/25/CbqkMA.jpeg')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                    <div class="flex flex-col justify-center items-center flex-grow text-center">
+                        <h3 class="text-xl font-bold mb-2">透明头像，重复名</h3>
+                        <p class="opacity-80 text-sm mb-4">代改名字头像，透明头像支持主流腾讯游戏</p>
+                        <!-- 点击修改按钮 -->
+                        <a href="https://www.zhufaka.cn/shop/G0WKUUMN/shp0mu" class="w-full liquid-btn text-sm py-2">点击修改</a>
+                    </div>
+                </div>
+                <!-- 卡片2：王者荣耀 改战区 -->
+                <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                    <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/25/Cbmckx.png')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                    <div class="flex flex-col justify-center items-center flex-grow text-center">
+                        <h3 class="text-xl font-bold mb-2">王者荣耀改战区</h3>
+                        <p class="opacity-80 text-sm mb-4">代查战力，修改战区，轻松拿排名！</p>
+                        <!-- 查看详细按钮 -->
+                        <a href="https://www.zhufaka.cn/shop/G0WKUUMN/jcf0az" class="w-full liquid-btn text-sm py-2">查看详细</a>
+                    </div>
+                </div>
+                <!-- 卡片3：热门连招库（切换按钮） -->
+                <div class="glass ios-radius p-6 shadow-xl flex flex-col scroll-blur">
+                    <div class="w-full h-48 bg-[url('https://i.imgs.ovh/2025/11/22/CFmmZh.jpeg')] bg-cover bg-center ios-radius mb-5 overflow-hidden"></div>
+                    <div class="flex flex-col justify-center items-center flex-grow text-center">
+                        <h3 class="text-xl font-bold mb-2">热门英雄连招库</h3>
+                        <p class="opacity-80 text-sm mb-4">版本热门英雄实战连招+出装推荐</p>
+                        <!-- 切换到连招库模块 -->
+                        <button id="showComboBtn" class="w-full liquid-btn bg-secondary text-black text-sm py-2">获取连招</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 连招库模块（默认隐藏） -->
+    <div id="comboModule" class="page-module page-hidden">
+        <!-- 核心连招内容 -->
+        <section class="container mx-auto px-4 py-8">
+            <!-- 热门英雄分类 -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-center text-secondary">版本热门英雄</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 英雄1：吕布（修复双击事件可重复触发） -->
+                    <div class="combo-card glass ios-radius p-6 shadow-xl" ondblclick="show吕布Video()">
+                        <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+                            <span class="text-accent">⚔️</span>吕布
+                        </h3>
+                        <p class="text-sm opacity-80 mb-2">核心连招：大招起手 → 一技能附魔 → 二技能护盾 → 平A</p>
+                        <p class="text-sm opacity-80 mb-4">简写：R → 1 → 2 → A</p>
+                        <div class="bg-black bg-opacity-20 p-3 ios-radius">
+                            <p class="text-xs opacity-90">出装推荐：抵抗之靴 → 破军 → 不祥征兆 → 魔女斗篷 → 反伤刺甲 → 名刀</p>
+                        </div>
+                    </div>
+                    <!-- 英雄2：妲己 -->
+                    <div class="combo-card glass ios-radius p-6 shadow-xl">
+                        <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+                            <span class="text-accent">🔮</span>妲己
+                        </h3>
+                        <p class="text-sm opacity-80 mb-2">核心连招：二技能控住 → 大招爆发 → 一技能收尾</p>
+                        <p class="text-sm opacity-80 mb-4">简写：2 → 3 → 1</p>
+                        <div class="bg-black bg-opacity-20 p-3 ios-radius">
+                            <p class="text-xs opacity-90">出装推荐：疾步之靴 → 回响之杖 → 痛苦面具 → 博学者之怒 → 虚无法杖 → 贤者之书</p>
+                        </div>
+                    </div>
+                    <!-- 英雄3：马可波罗 -->
+                    <div class="combo-card glass ios-radius p-6 shadow-xl">
+                        <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+                            <span class="text-accent">🏹</span>马可波罗
+                        </h3>
+                        <p class="text-sm opacity-80 mb-2">核心连招：一技能消耗 → 二技能位移 → 大招贴脸 → 一技能补伤害</p>
+                        <p class="text-sm opacity-80 mb-4">简写：1 → 2 → 3 → 1</p>
+                        <div class="bg-black bg-opacity-20 p-3 ios-radius">
+                            <p class="text-xs opacity-90">出装推荐：急速战靴 → 末世 → 纯净苍穹 → 破晓 → 不祥征兆 → 魔女斗篷</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 返回主页面按钮 -->
+            <div class="text-center mt-12">
+                <button id="backToMainBtn" class="liquid-btn bg-secondary text-black">返回主页面</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- 吕布视频播放器模块（默认隐藏） -->
+    <div id="playerModule" class="page-module page-hidden player-module">
+        <div class="plyr-container">
+            <h1 class="player-title">🎬 吕布连招视频教程</h1>
+            <p class="player-subtitle">液态玻璃质感播放器 · 实战连招演示</p>
+            
+            <div class="player-wrapper">
+                <div id="plyr-player"></div>
+                <div class="touch-slide-indicator">← 左右滑动调整进度 →</div>
+            </div>
+            
+            <div class="player-features">
+                <div class="player-feature-card">
+                    <h3>🎯 实战连招演示</h3>
+                    <p>详细拆解吕布“大招起手→一技能附魔→二技能护盾→平A”核心连招，结合团战场景演示操作时机</p>
+                </div>
+                
+                <div class="player-feature-card">
+                    <h3>✨ 出装思路解析</h3>
+                    <p>针对S41赛季出装调整，讲解“抵抗之靴→破军→不祥征兆”核心装备选择逻辑，适配不同对战场景</p>
+                </div>
+                
+                <div class="player-feature-card">
+                    <h3>📱 移动端操作技巧</h3>
+                    <p>适配手机端操作习惯，分享大招精准落地、一技能附魔时机等关键操作的手指发力技巧</p>
+                </div>
+            </div>
+            
+            <!-- 返回连招库按钮 -->
+            <div class="back-btn-container">
+                <button id="backToComboBtn" class="liquid-btn bg-secondary text-black">返回连招库</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系客服（已修改跳转链接） -->
+    <a href="https://qm.qq.com/q/s5SEYvti80" target="_blank" class="fixed bottom-6 right-6 glass ios-radius p-4 shadow-lg hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]">
+        <div class="flex items-center gap-3">
+            <span class="text-secondary font-bold">👉🏻</span>
+            <p class="text-sm opacity-90">点击联系客服</p>
+        </div>
+    </a>
+    <!-- 底部导航 -->
+    <footer class="glass ios-radius mx-4 mb-4 p-4 shadow-lg scroll-blur">
+        <div class="container mx-auto flex justify-center items-center h-full">
+            <p class="text-center text-sm opacity-70">
+                © 2025 王者荣耀 | 健康游戏 理性消费
+            </p>
+        </div>
+    </footer>
+
+    <!-- 引入Plyr播放器脚本 -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script>
+        // 滚动模糊效果
+        let lastScrollY = 0;
+        const rafThrottle = (func) => {
+            let isRunning = false;
+            return (...args) => {
+                if (!isRunning) {
+                    window.requestAnimationFrame(() => {
+                        func.apply(this, args);
+                        isRunning = false;
+                    });
+                    isRunning = true;
+                }
+            };
+        };
+        const handleScrollBlur = () => {
+            const scrollY = window.scrollY;
+            const blurValue = Math.min(4 + (scrollY / 80) * 16, 20);
+            document.querySelectorAll('.scroll-blur').forEach(el => {
+                el.style.backdropFilter = `blur(${blurValue}px)`;
+            });
+            lastScrollY = scrollY;
+        };
+
+        // 页面模块切换核心元素
+        const loadingMask = document.getElementById('loadingMask');
+        const mainModule = document.getElementById('mainModule');
+        const comboModule = document.getElementById('comboModule');
+        const playerModule = document.getElementById('playerModule');
+        const mainTitle = document.getElementById('mainTitle');
+        const comboTitle = document.getElementById('comboTitle');
+        const playerTitle = document.getElementById('playerTitle');
+        const showComboBtn = document.getElementById('showComboBtn');
+        const backToMainBtn = document.getElementById('backToMainBtn');
+        const backToComboBtn = document.getElementById('backToComboBtn');
+        const actionButtons = document.querySelectorAll('.liquid-btn:not(#showComboBtn):not(#backToMainBtn):not(#backToComboBtn)');
+
+        // 1. 主页面 → 连招库
+        const showComboModule = () => {
+            loadingMask.style.opacity = '1';
+            loadingMask.style.pointerEvents = 'auto';
+            
+            setTimeout(() => {
+                // 重置所有模块状态
+                mainModule.classList.add('page-hidden');
+                mainModule.classList.remove('page-visible');
+                comboModule.classList.add('page-visible');
+                comboModule.classList.remove('page-hidden');
+                playerModule.classList.add('page-hidden');
+                playerModule.classList.remove('page-visible');
+                
+                mainTitle.classList.add('page-hidden');
+                comboTitle.classList.remove('page-hidden');
+                playerTitle.classList.add('page-hidden');
+                
+                loadingMask.style.opacity = '0';
+                loadingMask.style.pointerEvents = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                alert('双击获取英雄视频连招～');
+            }, 1000);
+        };
+
+        // 2. 连招库 → 吕布视频（修复可重复触发）
+        function show吕布Video() {
+            loadingMask.style.opacity = '1';
+            loadingMask.style.pointerEvents = 'auto';
+            
+            setTimeout(() => {
+                // 切换模块状态
+                comboModule.classList.add('page-hidden');
+                comboModule.classList.remove('page-visible');
+                playerModule.classList.add('page-visible');
+                playerModule.classList.remove('page-hidden');
+                
+                comboTitle.classList.add('page-hidden');
+                playerTitle.classList.remove('page-hidden');
+                
+                loadingMask.style.opacity = '0';
+                loadingMask.style.pointerEvents = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                initPlyrPlayer(); // 每次进入都重新初始化（修复重复点击）
+            }, 1000);
+        }
+
+        // 3. 吕布视频 → 连招库（修复返回后可再次触发）
+        const backToComboModule = () => {
+            loadingMask.style.opacity = '1';
+            loadingMask.style.pointerEvents = 'auto';
+            
+            // 移除播放器iframe，避免冲突
+            const playerEl = document.getElementById('plyr-player');
+            while (playerEl.firstChild) {
+                playerEl.removeChild(playerEl.firstChild);
+            }
+            
+            setTimeout(() => {
+                playerModule.classList.add('page-hidden');
+                playerModule.classList.remove('page-visible');
+                comboModule.classList.add('page-visible');
+                comboModule.classList.remove('page-hidden');
+                
+                playerTitle.classList.add('page-hidden');
+                comboTitle.classList.remove('page-hidden');
+                
+                loadingMask.style.opacity = '0';
+                loadingMask.style.pointerEvents = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 1000);
+        };
+
+        // 4. 任意模块 → 主页面
+        const backToMainModule = () => {
+            loadingMask.style.opacity = '1';
+            loadingMask.style.pointerEvents = 'auto';
+            
+            // 移除播放器iframe
+            const playerEl = document.getElementById('plyr-player');
+            while (playerEl.firstChild) {
+                playerEl.removeChild(playerEl.firstChild);
+            }
+            
+            setTimeout(() => {
+                // 重置所有模块状态
+                comboModule.classList.add('page-hidden');
+                comboModule.classList.remove('page-visible');
+                playerModule.classList.add('page-hidden');
+                playerModule.classList.remove('page-visible');
+                mainModule.classList.add('page-visible');
+                mainModule.classList.remove('page-hidden');
+                
+                comboTitle.classList.add('page-hidden');
+                playerTitle.classList.add('page-hidden');
+                mainTitle.classList.remove('page-hidden');
+                
+                loadingMask.style.opacity = '0';
+                loadingMask.style.pointerEvents = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 1000);
+        };
+
+        // 初始化Plyr播放器（每次进入都重新创建，修复重复点击）
+        function initPlyrPlayer() {
+            // 先清空播放器容器
+            const playerEl = document.getElementById('plyr-player');
+            while (playerEl.firstChild) {
+                playerEl.removeChild(playerEl.firstChild);
+            }
+            
+            // 初始化Plyr控件
+            Plyr.setup('#plyr-player', {
+                controls: ['progress', 'current-time', 'duration', 'volume', 'fullscreen'],
+                tooltips: { controls: true },
+                keyboard: { focused: true }
+            });
+            
+            // 嵌入B站吕布连招视频（替换为有效BV号，示例：BV1qK411V7hC）
+            const bvid = 'BV1qK411V7hC'; // 替换为有效吕布连招视频BV号
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://player.bilibili.com/player.html?bvid=${bvid}&page=1&danmaku=1&high_quality=1`;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.allowFullscreen = true;
+            document.getElementById('plyr-player').appendChild(iframe);
+            
+            // 触摸进度提示
+            const playerWrapper = document.querySelector('.player-wrapper');
+            const indicator = document.querySelector('.touch-slide-indicator');
+            playerWrapper.addEventListener('touchstart', () => {
+                indicator.style.display = 'block';
+                clearTimeout(indicator.timer);
+                indicator.timer = setTimeout(() => indicator.style.display = 'none', 1500);
+            });
+        }
+
+        // 绑定按钮事件
+        showComboBtn.addEventListener('click', showComboModule);
+        backToMainBtn.addEventListener('click', backToMainModule);
+        backToComboBtn.addEventListener('click', backToComboModule);
+        actionButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (this.tagName === 'A') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const targetUrl = this.tagName === 'A' ? this.href : null;
+                loadingMask.style.opacity = '1';
+                loadingMask.style.pointerEvents = 'auto';
+                
+                setTimeout(() => {
+                    loadingMask.style.opacity = '0';
+                    loadingMask.style.pointerEvents = 'none';
+                    if (targetUrl) window.open(targetUrl, '_blank');
+                }, 1000);
+            });
+        });
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const alertMask = document.getElementById('entryAlert');
+            const today = new Date().toISOString().split('T')[0];
+            const lastAlertDate = localStorage.getItem('lastAlertDate');
+            
+            if (lastAlertDate === today) {
+                alertMask.style.display = 'none';
+            } else {
+                localStorage.setItem('lastAlertDate', today);
+            }
+            window.addEventListener('scroll', rafThrottle(handleScrollBlur));
+            handleScrollBlur();
+            alertMask.addEventListener('click', () => {
+                alertMask.style.opacity = '0';
+                setTimeout(() => alertMask.style.display = 'none', 500);
+            });
+        });
+    </script>
+</body>
+</html>
