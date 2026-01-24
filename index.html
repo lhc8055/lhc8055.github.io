@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>一.fun内部点号接口</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", "黑体", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        /* 红黑主背景 */
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(160deg, #000000 0%, #2c0000 50%, #000000 100%);
+            background-size: 200% 200%;
+            animation: bgMove 8s ease infinite alternate;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+        @keyframes bgMove {
+            0% {background-position: 0 0;}
+            100% {background-position: 100% 100%;}
+        }
+        /* 初始页面标题/按钮样式 */
+        .main-title, .time-subtitle, .main-btn {
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+        .main-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ff2424;
+            margin-bottom: 12px;
+            text-shadow: 0 0 15px rgba(255, 36, 36, 0.6), 0 2px 5px #000;
+            text-align: center;
+        }
+        .time-subtitle {
+            font-size: 16px;
+            color: #f5f5f5;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8);
+        }
+        .main-btn {
+            width: 90%;
+            max-width: 420px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 36, 36, 0.4);
+            border-radius: 30px;
+            box-shadow: 0 0 25px rgba(255, 36, 36, 0.2), 0 4px 15px #000;
+            cursor: pointer;
+            color: #f5f5f5;
+            font-size: 16px;
+        }
+        .main-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 35px rgba(255, 36, 36, 0.35), 0 6px 20px #000;
+            border-color: rgba(255, 36, 36, 0.6);
+        }
+        .main-btn:active {
+            transform: scale(0.98);
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .btn-text {
+            flex: 1;
+            text-align: left;
+            opacity: 0.8;
+        }
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 36, 36, 0.3);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 36, 36, 0.5);
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        @keyframes rotate360 {
+            0% {transform: rotate(0deg);}
+            100% {transform: rotate(360deg);}
+        }
+        .btn-icon.rotate {
+            animation: rotate360 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+        }
+        /* 灵动卡片动画 */
+        .card {
+            width: 120px;
+            height: 80px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 36, 36, 0.4);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(255, 36, 36, 0.15);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.2) translateY(20px);
+            opacity: 0;
+            visibility: hidden;
+            transition: 
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.3s ease,
+                width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform, opacity;
+            z-index: 1;
+        }
+        .card.show {
+            opacity: 0.9;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(0.8) translateY(0);
+        }
+        .card.fullscreen {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            transform: translate(-50%, -50%) scale(1) translateY(0);
+            opacity: 1;
+            box-shadow: none;
+            z-index: 999;
+            background-color: rgba(0, 0, 0, 0.95);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card-content {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s ease 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card.fullscreen .card-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .card-title, .card-subtitle {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .title-hide, .subtitle-hide {
+            transform: translateY(-150%);
+            opacity: 0;
+        }
+        .card-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #ff2424;
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(255, 36, 36, 0.5);
+        }
+        .card-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .card-input {
+            width: 90%;
+            max-width: 380px;
+            height: 50px;
+            padding: 0 16px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 36, 36, 0.4);
+            border-radius: 25px;
+            color: #f5f5f5;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .card-input:focus {
+            border-color: rgba(255, 36, 36, 0.8);
+            box-shadow: 0 0 15px rgba(255, 36, 36, 0.3);
+        }
+        .card-btn {
+            width: 90%;
+            max-width: 380px;
+            height: 50px;
+            background: rgba(255, 36, 36, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 36, 36, 0.8);
+            border-radius: 25px;
+            color: #f5f5f5;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .card-btn:hover {
+            background: rgba(255, 36, 36, 0.8);
+            box-shadow: 0 0 15px rgba(255, 36, 36, 0.4);
+        }
+        .result-text {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .result-text.success {
+            color: #4CAF50;
+            opacity: 1;
+        }
+        .result-text.error {
+            color: #ff2424;
+            opacity: 1;
+        }
+        .result-text.fade-out {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .card-input.slide-out, .card-btn.slide-out {
+            transform: translateX(-150%);
+            opacity: 0;
+        }
+        /* 创建订单输入框容器 */
+        .new-input-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            visibility: hidden;
+            width: 90%;
+            max-width: 380px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: none;
+            border-radius: 0;
+            box-shadow: 0 0 20px rgba(255, 36, 36, 0.3);
+            transition: 
+                transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .new-input-container.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        .new-input-title {
+            color: #ff2424;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .new-input {
+            width: 100%;
+            height: 45px;
+            padding: 0 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 36, 36, 0.5);
+            border-radius: 0;
+            color: #f5f5f5;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .new-input:focus {
+            border-color: #ff2424;
+            box-shadow: 0 0 10px rgba(255, 36, 36, 0.4);
+        }
+        .new-input-btn {
+            width: 100%;
+            height: 45px;
+            background: rgba(255, 36, 36, 0.7);
+            border: 1px solid rgba(255, 36, 36, 0.9);
+            border-radius: 0;
+            color: #f5f5f5;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .new-input-btn:hover {
+            background: #ff2424;
+            box-shadow: 0 0 15px rgba(255, 36, 36, 0.5);
+        }
+        /* 感谢页面样式（背景改为不透明黑色） */
+        .thanks-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 40px 20px;
+            background: #000; /* 改为不透明纯黑色 */
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.9);
+            transition: 
+                opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                visibility 0s 0.6s;
+            z-index: 1001;
+        }
+        .thanks-container.show {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            transition-delay: 0s;
+        }
+        .thanks-title {
+            color: #ff2424;
+            font-size: 24px;
+            font-weight: 900;
+            text-shadow: 0 0 15px rgba(255, 36, 36, 0.7);
+            text-align: center;
+        }
+        .thanks-img {
+            max-width: 80%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(255, 36, 36, 0.4);
+        }
+        .thanks-info {
+            color: #f5f5f5;
+            font-size: 16px;
+            line-height: 1.8;
+            text-align: center;
+        }
+        .contact-btn {
+            width: 90%;
+            max-width: 320px;
+            height: 55px;
+            background: #ff2424;
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(255, 36, 36, 0.6);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .contact-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 35px rgba(255, 36, 36, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <!-- 初始页面元素 -->
+    <h1 class="main-title">一.fun内部点号接口</h1>
+    <p class="time-subtitle" id="realTime"></p>
+    <div class="main-btn" id="mainBtn">
+        <span class="btn-text">一.fun付费端验证接口</span>
+        <span class="btn-icon" id="rotateBtn">👈🏻</span>
+    </div>
+
+    <!-- 卡密系统卡片 -->
+    <div class="card" id="animateCard">
+        <div class="card-content">
+            <h2 class="card-title">一.fun卡密系统2.0</h2>
+            <p class="card-subtitle">建站5年，专注于点号业务！</p>
+            <input type="text" class="card-input" placeholder="请输入卡密..." id="cardInput">
+            <button class="card-btn" id="verifyBtn">验证卡密</button>
+            <p class="result-text" id="cardResult"></p>
+        </div>
+    </div>
+
+    <!-- 创建订单容器 -->
+    <div class="new-input-container" id="newInputContainer">
+        <p class="new-input-title">创建订单</p>
+        <input type="text" class="new-input" placeholder="请输入目标QQ或微信..." id="newInput">
+        <button class="new-input-btn" id="createBtn">创建订单</button>
+        <p class="result-text" id="createResult"></p>
+    </div>
+
+    <!-- 最终感谢页面（背景已改为不透明） -->
+    <div class="thanks-container" id="thanksContainer">
+        <h2 class="thanks-title">一.fun 感谢您的支持 祝您生活愉快！</h2>
+        <img src="https://imgloc.com/image/y5mMMX" alt="感谢配图" class="thanks-img">
+        <div class="thanks-info">用户名：islove</div>
+        <div class="thanks-info">IP：安徽 合肥</div>
+        <!-- 安全跳转QQ客服 -->
+        <a href="https://qm.qq.com/q/qtKIW5rK1i" target="_blank" rel="noopener noreferrer">
+            <button class="contact-btn">联系客服</button>
+        </a>
+    </div>
+
+    <script>
+        // 1. 实时更新时间
+        function getRealTime() {
+            const now = new Date();
+            const addZero = n => n < 10 ? `0${n}` : n;
+            const year = now.getFullYear();
+            const month = addZero(now.getMonth() + 1);
+            const day = addZero(now.getDate());
+            const hour = addZero(now.getHours());
+            const minute = addZero(now.getMinutes());
+            const second = addZero(now.getSeconds());
+            const weekArr = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const week = weekArr[now.getDay()];
+            return `${year}年${month}月${day}日 ${hour}:${minute}:${second} ${week}`;
+        }
+        const timeDom = document.getElementById('realTime');
+        timeDom.innerText = getRealTime();
+        setInterval(() => {timeDom.innerText = getRealTime();}, 1000);
+
+        // 2. 初始按钮触发卡片展开
+        const mainBtn = document.getElementById('mainBtn');
+        const rotateBtn = document.getElementById('rotateBtn');
+        const card = document.getElementById('animateCard');
+        let isAnimating = false;
+
+        function handleBtnClick() {
+            if (isAnimating) return;
+            rotateBtn.classList.add('rotate');
+            setTimeout(() => rotateBtn.classList.remove('rotate'), 600);
+            
+            setTimeout(() => {
+                isAnimating = true;
+                card.classList.add('show');
+                setTimeout(() => {
+                    card.classList.add('fullscreen');
+                    isAnimating = false;
+                }, 200);
+            }, 100);
+        }
+        mainBtn.addEventListener('click', handleBtnClick);
+        rotateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleBtnClick();
+        });
+
+        // 3. 卡密验证逻辑
+        const cardInput = document.getElementById('cardInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const cardResult = document.getElementById('cardResult');
+        const newInputContainer = document.getElementById('newInputContainer');
+        const cardTitle = document.querySelector('.card-title');
+        const cardSubtitle = document.querySelector('.card-subtitle');
+        const validCard = '1.fun888usjg';
+
+        function verifyCard() {
+            const input = cardInput.value.trim();
+            if (input === validCard) {
+                cardResult.className = 'result-text success';
+                cardResult.innerText = '验证成功！';
+                
+                // 2秒后显示创建订单容器
+                setTimeout(() => {
+                    cardResult.classList.add('fade-out');
+                    cardInput.classList.add('slide-out');
+                    verifyBtn.classList.add('slide-out');
+                    
+                    setTimeout(() => {
+                        newInputContainer.classList.add('show');
+                        cardTitle.classList.add('title-hide');
+                        cardSubtitle.classList.add('subtitle-hide');
+                    }, 500);
+                }, 2000);
+            } else {
+                cardResult.className = 'result-text error';
+                cardResult.innerText = '卡密无效，请重新输入';
+            }
+        }
+        verifyBtn.addEventListener('click', verifyCard);
+        cardInput.addEventListener('keydown', (e) => e.key === 'Enter' && verifyCard());
+
+        // 4. 创建订单逻辑（输入zw8472024触发）
+        const newInput = document.getElementById('newInput');
+        const createBtn = document.getElementById('createBtn');
+        const createResult = document.getElementById('createResult');
+        const thanksContainer = document.getElementById('thanksContainer');
+        const allOldElements = [
+            document.querySelector('.main-title'),
+            document.querySelector('.time-subtitle'),
+            mainBtn,
+            card,
+            newInputContainer
+        ];
+
+        function createOrder() {
+            const input = newInput.value.trim();
+            if (input === 'zw8472024') {
+                // 1. 显示创建成功提示
+                createResult.className = 'result-text success';
+                createResult.innerText = '创建成功！';
+                
+                // 2. 手机震动（兼容性判断）
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200]); // 震动200ms→停100ms→再震200ms
+                }
+                
+                // 3. 1秒后隐藏所有旧元素，显示感谢页面
+                setTimeout(() => {
+                    allOldElements.forEach(el => el.classList.add('hide'));
+                    setTimeout(() => {
+                        thanksContainer.classList.add('show');
+                    }, 500);
+                }, 1000);
+            } else {
+                createResult.className = 'result-text error';
+                createResult.innerText = '输入有误，请重新尝试';
+            }
+        }
+        createBtn.addEventListener('click', createOrder);
+        newInput.addEventListener('keydown', (e) => e.key === 'Enter' && createOrder());
+    </script>
+</body>
+</html>
+
