@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>木子项目 · 纯C内核</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts：Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        /* ========== 完整样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: #0a0512;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            color: #f0e6ff;
+            line-height: 1.5;
+            padding: 20px 0 40px 0;
+        }
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(140, 80, 255, 0.4) 0%, transparent 35%),
+                        radial-gradient(circle at 80% 70%, rgba(255, 90, 200, 0.3) 0%, transparent 40%),
+                        radial-gradient(circle at 10% 80%, #2c1742 0%, transparent 60%),
+                        repeating-linear-gradient(45deg, rgba(200, 180, 255, 0.02) 0px, rgba(200, 180, 255, 0.02) 2px, transparent 2px, transparent 8px);
+            background-blend-mode: overlay;
+            animation: hueRotateBg 24s infinite alternate ease-in-out;
+        }
+        @keyframes hueRotateBg {
+            0% { filter: hue-rotate(0deg) saturate(1); }
+            50% { filter: hue-rotate(15deg) saturate(1.2); }
+            100% { filter: hue-rotate(-10deg) saturate(1.1); }
+        }
+        .floating-dots {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .floating-dots span {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(210, 170, 255, 0.25);
+            border-radius: 50%;
+            box-shadow: 0 0 15px #b77eff;
+            animation: floatRound 16s infinite ease-in-out;
+        }
+        .floating-dots span:nth-child(1) { top: 20%; left: 15%; width: 10px; height: 10px; animation-duration: 19s; }
+        .floating-dots span:nth-child(2) { top: 65%; left: 85%; width: 14px; height: 14px; animation-duration: 22s; background: rgba(255, 140, 230, 0.3); }
+        .floating-dots span:nth-child(3) { top: 80%; left: 10%; width: 8px; height: 8px; animation-duration: 14s; }
+        .floating-dots span:nth-child(4) { top: 30%; right: 12%; width: 18px; height: 18px; animation-duration: 27s; opacity: 0.2; }
+        .floating-dots span:nth-child(5) { bottom: 15%; left: 40%; width: 12px; height: 12px; animation-duration: 20s; }
+        @keyframes floatRound {
+            0% { transform: translateY(0) scale(1); opacity: 0.2; }
+            50% { transform: translateY(-40px) scale(1.3); opacity: 0.5; }
+            100% { transform: translateY(0) scale(1); opacity: 0.2; }
+        }
+        .phone-frame {
+            position: relative;
+            z-index: 10;
+            max-width: 380px;
+            width: 100%;
+            margin: 0 16px;
+        }
+        .glass-card {
+            background: rgba(15, 8, 24, 0.5);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(190, 130, 255, 0.3);
+            border-radius: 36px;
+            box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 210, 255, 0.1) inset;
+            transition: border-color 0.2s, box-shadow 0.3s;
+        }
+        .content {
+            animation: contentFloat 0.7s cubic-bezier(0.15, 0.9, 0.25, 1) forwards;
+        }
+        @keyframes contentFloat {
+            0% { opacity: 0; transform: translateY(28px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .header {
+            text-align: center;
+            padding: 28px 20px 24px;
+            margin-bottom: 18px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(15, 8, 24, 0.5);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(190, 130, 255, 0.3);
+            border-radius: 36px;
+            box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 210, 255, 0.1) inset;
+            z-index: 1;
+        }
+        .header::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://s41.ax1x.com/2026/02/16/pZLorr9.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+            border-radius: inherit;
+            transition: opacity 0.6s ease;
+        }
+        .header.img-loaded::after { opacity: 0.4; }
+        .header::before {
+            content: "";
+            position: absolute;
+            bottom: 12px;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(200, 160, 255, 0.5), transparent);
+            border-radius: 4px;
+            z-index: 2;
+        }
+        .main-title {
+            font-size: 3.4rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(145deg, #f0dcff, #cfb2ff, #b7a2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+            text-shadow: 0 0 16px rgba(180, 130, 255, 0.5);
+            line-height: 1.1;
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            animation: titleFloat 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.1s forwards;
+        }
+        @keyframes titleFloat {
+            0% { opacity: 0; transform: translateY(-20px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .sub-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            background: rgba(35, 18, 48, 0.7);
+            backdrop-filter: blur(4px);
+            display: inline-block;
+            padding: 6px 22px;
+            border-radius: 60px;
+            margin: 0 0 12px 0;
+            border: 1px solid rgba(200, 150, 255, 0.5);
+            color: #f2e2ff;
+            position: relative;
+            z-index: 2;
+        }
+        .sub-title span { color: #ffe791; font-weight: 600; margin: 0 4px; }
+        .eng-line {
+            font-size: 0.95rem;
+            color: #bda5e6;
+            letter-spacing: 0.5px;
+            font-weight: 300;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-top: 4px;
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+        }
+        .eng-line .letter {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: letterFadeIn 0.3s ease forwards;
+        }
+        @keyframes letterFadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .channel-chip {
+            background: rgba(30, 15, 45, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(210, 170, 255, 0.6);
+            border-radius: 60px;
+            padding: 6px 16px 6px 20px;
+            margin: 10px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 18px rgba(100, 40, 180, 0.4);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .channel-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .channel-left i { font-size: 1.5rem; color: #c999ff; }
+        .channel-name {
+            background: #2e1947;
+            padding: 4px 14px;
+            border-radius: 60px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffea8b !important;
+            letter-spacing: 0.5px;
+            border: 1px solid #c08cff;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .channel-name:hover { background: #3f235b; }
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dbbaff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(220, 160, 255, 0.3);
+        }
+        .copy-btn:active { background: #7f4eaf; color: white; transform: scale(0.9); }
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 8px 0 28px;
+            list-style: none;
+        }
+        .action-btn {
+            background: rgba(20, 10, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(190, 130, 255, 0.35);
+            border-radius: 30px;
+            padding: 14px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            color: #f0e2ff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            height: 100%;
+            box-shadow: 0 8px 18px -10px #00000080, 0 0 0 1px rgba(230, 180, 255, 0.1) inset;
+            word-break: break-word;
+            min-height: 72px;
+        }
+        .action-btn i {
+            font-size: 1.8rem;
+            min-width: 36px;
+            text-align: center;
+            color: #cb9cff;
+            transition: transform 0.15s;
+        }
+        .action-btn:active {
+            transform: scale(0.97);
+            background: rgba(70, 35, 105, 0.8);
+            border-color: #dcb0ff;
+            box-shadow: 0 0 22px #b77cff;
+        }
+        .action-btn:active i { color: #ffeaa3; transform: scale(1.02); }
+        .action-btn.two-line { padding-top: 10px; padding-bottom: 10px; }
+        .action-btn.single-line-adjust { padding-top: 10px; padding-bottom: 10px; }
+        .action-btn.netdisk-btn { animation: subtlePulse 3s infinite ease-in-out; }
+        @keyframes subtlePulse {
+            0% { box-shadow: 0 8px 18px -10px #00000080, 0 0 0 1px rgba(230, 180, 255, 0.1) inset; }
+            50% { box-shadow: 0 8px 22px -6px #c38eff, 0 0 0 1px rgba(230, 180, 255, 0.25) inset; }
+            100% { box-shadow: 0 8px 18px -10px #00000080, 0 0 0 1px rgba(230, 180, 255, 0.1) inset; }
+        }
+        .foot-note {
+            margin-top: 16px;
+            font-size: 0.8rem;
+            color: #9f7bcb;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(8px);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px dashed #9150d0;
+        }
+        /* 圆形音乐控件 */
+        #musicToggle {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(15, 8, 24, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(210, 170, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 0 12px rgba(180, 130, 255, 0.5);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #musicToggle i {
+            position: relative;
+            z-index: 6;
+            color: #ffeec2;
+            font-size: 1.2rem;
+            filter: drop-shadow(0 0 4px #b77cff);
+            transition: color 0.2s;
+        }
+        .music-spin {
+            animation: spin 3s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #musicToggle:active {
+            border-color: #f0b5ff;
+            box-shadow: 0 0 20px #d59eff;
+        }
+        .toast-message {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: #221530e0;
+            backdrop-filter: blur(20px);
+            padding: 12px 28px;
+            border-radius: 60px;
+            border: 1px solid #eaadff;
+            color: #fff3c9;
+            font-weight: 500;
+            box-shadow: 0 10px 30px #3c1c6e;
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 999;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast-message.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        @media (max-width: 340px) {
+            .main-title { font-size: 2.8rem; }
+            .action-btn { font-size: 0.85rem; padding: 12px 8px; }
+            .action-btn i { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div class="floating-dots">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="phone-frame content">
+        <div class="header" id="header">
+            <div class="main-title">𝙈𝙐𝙕𝙄 木子</div>
+            <div class="sub-title">
+                木子纯C <span>内核</span> 稳定毋庸置疑
+            </div>
+            <div class="eng-line" id="engLine">
+                Develop the most stable game hack
+            </div>
+        </div>
+
+        <!-- 官方频道芯片：频道名可点击 -->
+        <div class="channel-chip glass-card">
+            <div class="channel-left">
+                <i class="fab fa-telegram"></i>
+                <span>官方频道</span>
+                <a href="https://t.me/muzinb888" target="_blank" rel="noopener noreferrer" class="channel-name" id="channelTag">@muzinb888</a>
+            </div>
+            <button class="copy-btn" id="copyChannelBtn" aria-label="复制频道名">
+                <i class="far fa-copy"></i>
+            </button>
+        </div>
+
+        <ul class="grid-buttons">
+            <li class="grid-item">
+                <a href="https://llua.cn/?mod=cardcheck&id=25214" target="_blank" rel="noopener noreferrer" class="action-btn">
+                    <i class="fas fa-link-slash"></i><span>内核解绑地址</span>
+                </a>
+            </li>
+            <li class="grid-item">
+                <a href="https://muzinb888.lanzouu.com/b019vo2d7e" class="action-btn two-line netdisk-btn" onclick="copyAndRedirect(event)">
+                    <i class="fas fa-cloud-arrow-up"></i><span>木子官方网盘链接</span>
+                </a>
+            </li>
+            <li class="grid-item">
+                <a href="https://qm.qq.com/cgi-bin/qm/qr?k=TmGxzIqtvLjKYY9HVLdBz91ILpag1ovG" target="_blank" rel="noopener noreferrer" class="action-btn two-line">
+                    <i class="fab fa-qq"></i><span>联系QQ客服<br>免手续提卡</span>
+                </a>
+            </li>
+            <li class="grid-item">
+                <a href="https://918.oioix.cn/links/C297DE50" target="_blank" rel="noopener noreferrer" class="action-btn">
+                    <i class="fas fa-credit-card"></i><span>官方提卡网</span>
+                </a>
+            </li>
+            <li class="grid-item">
+                <a href="https://s41.ax1x.com/2026/02/16/pZLveyV.jpg" target="_blank" rel="noopener noreferrer" class="action-btn single-line-adjust">
+                    <i class="fab fa-telegram"></i><span>点击加入TG频道</span>
+                </a>
+            </li>
+            <li class="grid-item">
+                <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=z2CJ%2FlmTcr6K17wdzXBaDYN4kSGGOutgLUnbmRQNsWDC1eCqHzndBAW4gcBdnL3w&busi_data=eyJncm91cENvZGUiOiIzMjYwNTk5NjIiLCJ0b2tlbiI6Ikh5NnBCazZVWm02RURiM2ZkSE9GWGdjTFZPckV3endRSkZYR3FIVWV2VERlZWxnbUh1TFF5d2diS011M2cvZzIiLCJ1aW4iOiIzNTUyNDUzODYyIn0%3D&data=ihCvCuoVA1xGbTCdmM-4bhy-769XZNquCI8ZlpNioqGSgwKWvA2AKJCvHHlZCwqg2_tHwHp1t5JB42XFZiTvDA&svctype=4&tempid=h5_group_info" target="_blank" rel="noopener noreferrer" class="action-btn">
+                    <i class="fas fa-users"></i><span>加入官方Q群</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="foot-note" id="footNote">
+            <span id="musicToggle"><i class="fas fa-music"></i></span>
+            <i class="fas fa-code"></i> 木子内核 · 拯救世界 <i class="fas fa-shield-halved"></i>
+        </div>
+    </div>
+
+    <audio id="bgm" src="bgm.mp3" preload="auto" loop autoplay></audio>
+    <div id="toast" class="toast-message">✨ 已复制 @muzinb888</div>
+
+    <script>
+        (function() {
+            // 逐字母动画
+            const engLine = document.getElementById('engLine');
+            if (engLine) {
+                const text = engLine.innerText;
+                engLine.innerHTML = '';
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    const span = document.createElement('span');
+                    span.className = 'letter';
+                    if (char === ' ') span.innerHTML = '&nbsp;';
+                    else span.textContent = char;
+                    span.style.animationDelay = (i * 0.03) + 's';
+                    engLine.appendChild(span);
+                }
+            }
+
+            // 背景图片加载
+            const header = document.getElementById('header');
+            const img = new Image();
+            img.onload = () => header.classList.add('img-loaded');
+            img.onerror = () => header.classList.add('img-loaded');
+            img.src = 'https://s41.ax1x.com/2026/02/16/pZLorr9.png';
+
+            // Toast 提示
+            function showToast(msg, duration = 2000) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(window.toastTimer);
+                window.toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+            }
+
+            // 复制频道按钮
+            const copyBtn = document.getElementById('copyChannelBtn');
+            const channelName = '@muzinb888';
+            copyBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(channelName).then(() => showToast('✨ 已复制 ' + channelName))
+                .catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = channelName;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('📋 已复制 ' + channelName);
+                });
+            });
+
+            // 复制按钮呼吸效果
+            setInterval(() => {
+                copyBtn.style.transition = 'box-shadow 0.2s';
+                copyBtn.style.boxShadow = '0 0 16px #c38eff';
+                setTimeout(() => copyBtn.style.boxShadow = 'none', 400);
+            }, 5000);
+
+            // ================= 音乐控制：完美暂停/恢复，停在当前角度 =================
+            const bgm = document.getElementById('bgm');
+            const musicToggle = document.getElementById('musicToggle');
+            const musicIcon = musicToggle.querySelector('i');
+
+            // 核心函数：根据音频播放状态更新图标
+            function syncIconWithPlayback() {
+                if (bgm.paused) {
+                    // 暂停时：保留旋转类（为了不重置角度），但暂停动画
+                    if (musicIcon.classList.contains('music-spin')) {
+                        musicIcon.style.animationPlayState = 'paused';
+                    } else {
+                        // 如果没有旋转类（比如初始状态），则不需要做任何事
+                    }
+                } else {
+                    // 播放中：确保有旋转类，并运行动画
+                    if (!musicIcon.classList.contains('music-spin')) {
+                        musicIcon.classList.add('music-spin');
+                    }
+                    musicIcon.style.animationPlayState = 'running';
+                }
+            }
+
+            // 监听音频事件，保证状态同步
+            bgm.addEventListener('play', syncIconWithPlayback);
+            bgm.addEventListener('pause', syncIconWithPlayback);
+            bgm.addEventListener('ended', syncIconWithPlayback); // ended时也会暂停
+
+            // 点击切换
+            musicToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (bgm.paused) {
+                    bgm.play().catch(err => console.log('播放失败', err));
+                } else {
+                    bgm.pause();
+                }
+            });
+
+            // 自动播放尝试（由于autoplay属性，浏览器可能阻止，这里统一处理）
+            function initAutoPlay() {
+                bgm.play().then(() => {
+                    // 自动播放成功：同步图标
+                    syncIconWithPlayback();
+                }).catch(() => {
+                    // 自动播放失败：图标保持无旋转类（如果之前有，就移除），确保静止
+                    musicIcon.classList.remove('music-spin');
+                    musicIcon.style.animationPlayState = ''; // 清除内联样式
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAutoPlay);
+            } else {
+                initAutoPlay();
+            }
+
+            // 音频加载失败处理
+            bgm.addEventListener('error', () => {
+                musicToggle.style.opacity = '0.6';
+                console.warn('背景音乐加载失败');
+            });
+
+            // 网盘按钮：复制0000并跳转
+            window.copyAndRedirect = function(e) {
+                e.preventDefault();
+                const link = e.currentTarget.href;
+                navigator.clipboard.writeText('0000').then(() => showToast('📋 密码 0000 已复制'))
+                .catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = '0000';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('📋 密码 0000 已复制');
+                }).finally(() => {
+                    window.open(link, '_blank');
+                });
+            };
+        })();
+    </script>
+</body>
+</html>
