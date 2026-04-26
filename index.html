@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>『平野尽』技术演示工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            text-decoration: none;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            --color: #E1E1E1;
+            background-color: #F3F3F3;
+            background-image:
+                linear-gradient(0deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%, transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%, transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%, transparent);
+            background-size: 55px 55px;
+        }
+
+        .no-transition,
+        .no-transition *,
+        .no-transition *::before,
+        .no-transition *::after {
+            transition: none !important;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 999;
+            transition: justify-content 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: justify-content;
+        }
+
+        .bottom-nav.active {
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .bottom-nav .box:first-child {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: opacity, transform;
+            pointer-events: auto;
+        }
+
+        .bottom-nav.active .box:first-child {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        .bottom-nav .start-btn {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: opacity, transform;
+            pointer-events: auto;
+        }
+
+        .bottom-nav.active .start-btn {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        .bottom-nav .search-icon {
+            width: var(--w);
+            border-radius: var(--r);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: width, border-radius;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bottom-nav.active .search-icon {
+            width: calc(100% - 40px);
+            max-width: 800px;
+            border-radius: 9999px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0 28px;
+        }
+
+        .search-icon .icon-search {
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
+            will-change: opacity, transform;
+            pointer-events: none;
+        }
+
+        .bottom-nav.active .search-icon .icon-search {
+            transform: translateX(0);
+        }
+
+        .search-icon .icon-close {
+            opacity: 0;
+            transform: translateX(20px);
+            position: absolute;
+            right: 28px;
+            transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s;
+            will-change: opacity, transform;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .bottom-nav.active .search-icon .icon-close {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .fx-layer {
+            filter: contrast(3);
+        }
+
+        .box {
+            --w: 100px;
+            --h: 100px;
+            --r: 9999px;
+            --tr: 25%;
+            position: relative;
+            width: var(--w);
+            height: var(--h);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--r);
+            border: 1px double rgba(51, 51, 51, 0.08);
+            box-shadow:
+                inset 2px -2px 1px -1px rgba(255, 255, 255, 0.9),
+                inset -2px 2px 1px -1px rgba(255, 255, 255, 0.9),
+                inset 6px -6px 1px -6px rgba(255, 255, 255, 0.55),
+                inset -6px 6px 1px -6px rgba(255, 255, 255, 0.55),
+                inset 0 0 2px rgba(0, 0, 0, 0.8),
+                0 4px 12px rgba(0, 0, 0, 0.15),
+                0 12px 24px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(4px) saturate(150%);
+            cursor: pointer;
+            filter: brightness(0.9);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform, box-shadow;
+        }
+
+        .box svg {
+            width: 28px;
+            filter: drop-shadow(0 25px 3px rgba(102, 102, 102, 0.2));
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box.search-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .box span {
+            filter: drop-shadow(0 25px 3px rgba(102, 102, 102, 0.15));
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box::before {
+            content: '';
+            position: absolute;
+            z-index: 1;
+            top: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(var(--w) - 16px);
+            height: calc(var(--h) - 16px);
+            border-radius: var(--r);
+            border: 1px solid rgba(0, 0, 0, 0.9);
+            filter: blur(8px);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box::after {
+            z-index: 501;
+            content: '';
+            position: absolute;
+            width: var(--w);
+            height: var(--h);
+            border-radius: var(--r);
+            filter: blur(3px);
+            background: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.8) 0%,
+                    transparent var(--tr),
+                    transparent calc(100% - var(--tr)),
+                    rgba(255, 255, 255, 0.8) 100%);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box .circle-overlay {
+            position: absolute;
+            width: calc(var(--w) - 9px);
+            height: calc(var(--h) - 9px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--r);
+            filter: blur(1px);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box .ambient-highlight {
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            width: 40%;
+            height: 25%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            filter: blur(6px);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .box:active {
+            transform: none !important;
+            box-shadow:
+                inset 2px -2px 1px -1px rgba(255, 255, 255, 0.85),
+                inset -2px 2px 1px -1px rgba(255, 255, 255, 0.85),
+                inset 6px -6px 1px -6px rgba(255, 255, 255, 0.5),
+                inset -6px 6px 1px -6px rgba(255, 255, 255, 0.5),
+                inset 0 0 2px rgba(0, 0, 0, 0.75),
+                0 2px 6px rgba(0, 0, 0, 0.12),
+                0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .start-btn {
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: calc(100% - 240px);
+            max-width: 500px;
+            --h: 100px;
+        }
+
+        .start-btn::before {
+            display: none;
+        }
+
+        .start-btn span {
+            font-size: 33px;
+            color: #3e3e3e;
+        }
+
+        /* 优化后的下拉菜单动画 */
+        .popup-menu {
+            position: fixed;
+            z-index: 1000;
+            width: 280px;
+            max-width: calc(100vw - 32px);
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.5);
+            border-radius: 28px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.12),
+                0 2px 8px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            padding: 8px 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.85) translateY(20px);
+            transition: 
+                opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: bottom center;
+        }
+
+        .popup-menu.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateY(0);
+        }
+
+        .popup-menu .menu-list {
+            display: block;
+        }
+
+        .popup-menu .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 22px;
+            font-size: 17px;
+            color: #1c1c1e;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            transition: background 0.12s ease;
+            cursor: pointer;
+        }
+
+        .popup-menu .menu-item:first-child {
+            border-radius: 28px 28px 0 0;
+        }
+        .popup-menu .menu-item:last-child {
+            border-radius: 0 0 28px 28px;
+        }
+        .popup-menu .menu-item:only-child {
+            border-radius: 28px;
+        }
+
+        .popup-menu .menu-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .popup-menu .menu-item:active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .popup-menu .menu-item .left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .popup-menu .menu-item .number {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 500;
+            color: #3a3a3c;
+            flex-shrink: 0;
+        }
+
+        .popup-menu .menu-item.active {
+            color: #007aff;
+            font-weight: 500;
+        }
+
+        .popup-menu .menu-item.active .number {
+            color: #007aff;
+        }
+
+        .popup-menu .menu-item .checkmark {
+            width: 18px;
+            height: 18px;
+            fill: #007aff;
+            opacity: 0;
+            transition: opacity 0.12s ease;
+            flex-shrink: 0;
+        }
+
+        .popup-menu .menu-item.active .checkmark {
+            opacity: 1;
+        }
+
+        .popup-menu .divider {
+            height: 0.5px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 4px 22px;
+        }
+
+        /* 查询系统界面样式 */
+        .query-system {
+            position: fixed;
+            left: 20px;
+            right: 20px;
+            top: 20px;
+            bottom: 180px;
+            z-index: 998;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .query-system.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .query-system-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .query-time {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .query-time-value {
+            color: #007aff;
+            font-weight: 500;
+            font-size: 20px;
+        }
+
+        .query-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .query-title-text {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1c1c1e;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(0, 122, 255, 0.3);
+            border-radius: 16px;
+            font-size: 17px;
+            color: #1c1c1e;
+            outline: none;
+            transition: border-color 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .query-input:focus {
+            border-color: #007aff;
+        }
+
+        .query-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .query-input::placeholder {
+            color: #999;
+        }
+
+        .query-result {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            color: #1c1c1e;
+            font-size: 15px;
+            line-height: 1.6;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .query-result:empty::before {
+            content: "等待查询...";
+            color: #999;
+        }
+
+        .query-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .query-btn {
+            flex: 1;
+            padding: 16px;
+            background: #007aff;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .query-btn:hover {
+            background: #0066cc;
+        }
+
+        .query-btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            color: #1c1c1e;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* 法律风险强制弹窗 */
+        .legal-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .legal-modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .legal-modal {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .legal-modal-overlay.show .legal-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .legal-modal-header {
+            background: #ff3b30;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .legal-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .legal-modal-content {
+            padding: 20px;
+        }
+
+        .legal-modal-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .legal-modal-text strong {
+            color: #ff3b30;
+        }
+
+        .legal-modal-actions {
+            border-top: 0.5px solid #d1d1d6;
+            display: flex;
+        }
+
+        .legal-modal-btn {
+            flex: 1;
+            padding: 16px 0;
+            font-size: 17px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .legal-modal-btn:first-child {
+            border-bottom-left-radius: 28px;
+            color: #8e8e93;
+        }
+
+        .legal-modal-btn:last-child {
+            border-bottom-right-radius: 28px;
+            font-weight: 600;
+            color: #ff3b30;
+            border-left: 0.5px solid #d1d1d6;
+        }
+
+        .legal-modal-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* iOS 确认弹窗样式 */
+        .ios-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .ios-modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ios-modal {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            max-width: 320px;
+            width: 100%;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .ios-modal-overlay.show .ios-modal {
+            transform: scale(1);
+        }
+
+        .ios-modal-content {
+            text-align: center;
+            padding: 20px 16px;
+        }
+
+        .ios-modal-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 8px;
+        }
+
+        .ios-modal-text {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .ios-modal-actions {
+            border-top: 0.5px solid #d1d1d6;
+            display: flex;
+        }
+
+        .ios-modal-btn {
+            flex: 1;
+            padding: 14px 0;
+            font-size: 17px;
+            color: #007aff;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .ios-modal-btn:first-child {
+            border-bottom-left-radius: 28px;
+        }
+
+        .ios-modal-btn:last-child {
+            border-bottom-right-radius: 28px;
+            font-weight: 600;
+            border-left: 0.5px solid #d1d1d6;
+        }
+
+        .ios-modal-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .ios-modal-btn:active {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* 查询历史记录 */
+        .history-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .history-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .history-item {
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .bottom-nav {
+                bottom: 30px;
+                padding: 0 15px;
+            }
+            .box {
+                --w: 70px;
+                --h: 70px;
+            }
+            .box svg {
+                width: 22px;
+            }
+            .box.search-icon svg {
+                width: 26px;
+                height: 26px;
+            }
+            .start-btn {
+                width: calc(100% - 170px);
+                padding: 0 0.75rem;
+                --h: 70px;
+            }
+            .start-btn span {
+                font-size: 22px;
+            }
+            .bottom-nav.active .search-icon {
+                width: calc(100% - 30px);
+                max-width: 650px;
+                padding: 0 24px;
+            }
+            .icon-close {
+                right: 24px;
+            }
+            .popup-menu {
+                width: 260px;
+                border-radius: 24px;
+            }
+            .popup-menu .menu-item {
+                padding: 12px 18px;
+                font-size: 16px;
+            }
+            .popup-menu .menu-item:first-child {
+                border-radius: 24px 24px 0 0;
+            }
+            .popup-menu .menu-item:last-child {
+                border-radius: 0 0 24px 24px;
+            }
+            .popup-menu .divider {
+                margin: 3px 18px;
+            }
+            .query-system {
+                top: 15px;
+                bottom: 150px;
+                padding: 20px;
+                left: 15px;
+                right: 15px;
+            }
+            .query-title-text {
+                font-size: 24px;
+            }
+            .query-input, .query-result, .query-btn {
+                padding: 14px 16px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .bottom-nav {
+                bottom: 20px;
+                padding: 0 10px;
+            }
+            .box {
+                --w: 56px;
+                --h: 56px;
+            }
+            .box svg {
+                width: 18px;
+            }
+            .box.search-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+            .start-btn {
+                width: calc(100% - 130px);
+                padding: 0 0.5rem;
+                --h: 56px;
+            }
+            .start-btn span {
+                font-size: 18px;
+            }
+            .bottom-nav.active .search-icon {
+                width: calc(100% - 20px);
+                max-width: 450px;
+                padding: 0 20px;
+            }
+            .icon-close {
+                right: 20px;
+            }
+            .popup-menu {
+                width: 230px;
+                border-radius: 22px;
+            }
+            .popup-menu .menu-item {
+                padding: 11px 16px;
+                font-size: 15px;
+            }
+            .popup-menu .menu-item:first-child {
+                border-radius: 22px 22px 0 0;
+            }
+            .popup-menu .menu-item:last-child {
+                border-radius: 0 0 22px 22px;
+            }
+            .popup-menu .divider {
+                margin: 3px 16px;
+            }
+            .query-system {
+                top: 10px;
+                bottom: 120px;
+                padding: 16px;
+                left: 10px;
+                right: 10px;
+            }
+            .query-title-text {
+                font-size: 20px;
+            }
+            .query-time {
+                font-size: 14px;
+            }
+            .query-input, .query-result, .query-btn {
+                padding: 12px 14px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 法律风险强制弹窗 -->
+    <div class="legal-modal-overlay" id="legalModal">
+        <div class="legal-modal">
+            <div class="legal-modal-header">
+                <div class="legal-modal-title">⚠️ 重要法律风险提示</div>
+            </div>
+            <div class="legal-modal-content">
+                <p class="legal-modal-text">
+                    <strong>未经他人同意查询、获取、泄露、买卖公民个人信息属于《中华人民共和国刑法》规定的侵犯公民个人信息罪。</strong>
+                </p>
+                <p class="legal-modal-text">
+                    情节严重的，处三年以下有期徒刑或者拘役，并处或者单处罚金；情节特别严重的，处三年以上七年以下有期徒刑，并处罚金。
+                </p>
+                <p class="legal-modal-text">
+                    本工具仅用于前端技术学习交流，严禁用于任何非法用途。任何使用本工具进行违法活动的行为，与工具提供者无关，使用者需自行承担全部法律责任。
+                </p>
+            </div>
+            <div class="legal-modal-actions">
+                <button class="legal-modal-btn" id="exitBtn">退出</button>
+                <button class="legal-modal-btn" id="agreeBtn">我已了解并同意</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fx-layer bottom-nav">
+        <div class="box" id="addBtn">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+                <path d="M426.666667 426.666667H85.546667A85.418667 85.418667 0 0 0 0 512c0 47.445333 38.314667 85.333333 85.546667 85.333333H426.666667v341.12c0 47.274667 38.186667 85.546667 85.333333 85.546667 47.445333 0 85.333333-38.314667 85.333333-85.546667V597.333333h341.12A85.418667 85.418667 0 0 0 1024 512c0-47.445333-38.314667-85.333333-85.546667-85.333333H597.333333V85.546667A85.418667 85.418667 0 0 0 512 0c-47.445333 0-85.333333 38.314667-85.333333 85.546667V426.666667z" fill="#777"></path>
+            </svg>
+            <div class="circle-overlay"></div>
+            <div class="ambient-highlight"></div>
+        </div>
+
+        <div class="box start-btn" id="startBtn" style="--tr: 15%;">
+            <span>Get started</span>
+            <div class="circle-overlay"></div>
+            <div class="ambient-highlight"></div>
+        </div>
+
+        <div class="box search-icon" id="toggleBtn">
+            <svg class="icon-search" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <path d="M490.667 640A213.333 213.333 0 1 1 490.667 213.333 213.333 213.333 0 0 1 490.667 640m266.666 106.667l-128-128" fill="none" stroke="#777" stroke-width="80" stroke-linecap="round"></path>
+            </svg>
+            <svg class="icon-close" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <path d="M213.333 213.333l597.334 597.334M810.667 213.333l-597.334 597.334" fill="none" stroke="#777" stroke-width="80" stroke-linecap="round"></path>
+            </svg>
+            <div class="circle-overlay"></div>
+            <div class="ambient-highlight"></div>
+        </div>
+    </div>
+
+    <!-- 查询系统界面 -->
+    <div class="query-system" id="querySystem">
+        <div class="query-system-header">
+            <div class="query-time">
+                <span>当前时间</span>
+            </div>
+            <div class="query-time-value" id="currentTime">12:01:53</div>
+        </div>
+
+        <div class="query-title">
+            <span class="query-title-text">技术演示系统</span>
+        </div>
+
+        <input type="text" class="query-input" placeholder="请输入查询内容" id="queryInput">
+
+        <div class="query-result" id="queryResult"></div>
+
+        <div class="history-section" id="historySection" style="display: none;">
+            <div class="history-title">查询历史</div>
+            <div class="history-list" id="historyList"></div>
+        </div>
+
+        <div class="query-buttons">
+            <button class="query-btn secondary-btn" id="copyBtn" disabled>复制结果</button>
+        </div>
+    </div>
+
+    <div class="popup-menu" id="popupMenu">
+        <div class="menu-list">
+            <div class="menu-item" data-value="image">
+                <div class="left">
+                    <span class="number">1</span>
+                    <span>三要素</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="menu-item" data-value="video">
+                <div class="left">
+                    <span class="number">2</span>
+                    <span>二要素</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="menu-item" data-value="live">
+                <div class="left">
+                    <span class="number">3</span>
+                    <span>天眼法人</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="menu-item" data-value="screenshot">
+                <div class="left">
+                    <span class="number">4</span>
+                    <span>网易云反查</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="menu-item" data-value="favorite">
+                <div class="left">
+                    <span class="number">5</span>
+                    <span>银行卡四要素</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="menu-item" data-value="edited">
+                <div class="left">
+                    <span class="number">6</span>
+                    <span>全国模糊车主</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="menu-item active" data-value="all">
+                <div class="left">
+                    <span class="number">#</span>
+                    <span>综合查询</span>
+                </div>
+                <svg class="checkmark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M912 190l-55.3-55.3c-9.4-9.4-24.6-9.4-33.9 0L384 573.7 201.3 391c-9.4-9.4-24.6-9.4-33.9 0L112 446.3c-9.4 9.4-9.4 24.6 0 33.9l296 296c9.4 9.4 24.6 9.4 33.9 0l470.1-470c9.4-9.3 9.4-24.5 0-33.9z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS 确认弹窗 -->
+    <div class="ios-modal-overlay" id="iosModal">
+        <div class="ios-modal">
+            <div class="ios-modal-content">
+                <p class="ios-modal-title">
+                    技术演示说明
+                </p>
+                <p class="ios-modal-text">
+                    本系统仅用于前端技术演示，不提供任何实际查询功能。所有接口调用均为模拟，不会返回任何真实数据。
+                </p>
+            </div>
+            <div class="ios-modal-actions">
+                <button class="ios-modal-btn" id="allowBtn">了解更多</button>
+                <button class="ios-modal-btn" id="denyBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局配置
+        const API_BASE_URL = 'https://xiaowunb.top/gl.php';
+        const API_KEY = 'nlQbKUz7RFu7MgQjB6KMVAAnkEb1d5Ax';
+        const MAX_HISTORY_LENGTH = 10;
+
+        // DOM元素
+        const toggleBtn = document.getElementById('toggleBtn');
+        const navWrap = document.querySelector('.bottom-nav');
+        const addBtn = document.getElementById('addBtn');
+        const popupMenu = document.getElementById('popupMenu');
+        const menuItems = popupMenu.querySelectorAll('.menu-item');
+        const startBtn = document.getElementById('startBtn');
+        const iosModal = document.getElementById('iosModal');
+        const allowBtn = document.getElementById('allowBtn');
+        const denyBtn = document.getElementById('denyBtn');
+        const querySystem = document.getElementById('querySystem');
+        const copyBtn = document.getElementById('copyBtn');
+        const currentTimeEl = document.getElementById('currentTime');
+        const iconClose = document.querySelector('.icon-close');
+        const queryInput = document.getElementById('queryInput');
+        const queryResult = document.getElementById('queryResult');
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
+        const legalModal = document.getElementById('legalModal');
+        const exitBtn = document.getElementById('exitBtn');
+        const agreeBtn = document.getElementById('agreeBtn');
+
+        // 全局变量
+        let currentQueryType = 'all';
+        let queryHistory = JSON.parse(localStorage.getItem('queryHistory') || '[]');
+        let lastResult = '';
+
+        // 更新当前时间
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // 页面加载完成显示法律弹窗
+        window.addEventListener('DOMContentLoaded', () => {
+            legalModal.classList.add('show');
+        });
+
+        // 法律风险提示处理
+        exitBtn.addEventListener('click', () => {
+            document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-size: 24px; color: #666;">您已退出演示系统</div>';
+        });
+
+        agreeBtn.addEventListener('click', () => {
+            legalModal.classList.remove('show');
+            initApp();
+        });
+
+        // 初始化应用
+        function initApp() {
+            warmUpAnimation();
+            loadHistory();
+        }
+
+        function warmUpAnimation() {
+            navWrap.classList.add('no-transition');
+            navWrap.classList.add('active');
+            void navWrap.offsetWidth;
+            navWrap.classList.remove('active');
+            void navWrap.offsetWidth;
+            navWrap.classList.remove('no-transition');
+        }
+
+        function positionPopup() {
+            const addBtnRect = addBtn.getBoundingClientRect();
+            const popupWidth = popupMenu.offsetWidth;
+
+            let left = addBtnRect.left + addBtnRect.width / 2 - popupWidth / 2;
+            const minLeft = 16;
+            const maxLeft = window.innerWidth - popupWidth - 16;
+            left = Math.max(minLeft, Math.min(maxLeft, left));
+
+            popupMenu.style.left = `${left}px`;
+            popupMenu.style.bottom = `${window.innerHeight - addBtnRect.top + 16}px`;
+        }
+
+        addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            positionPopup();
+            popupMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!addBtn.contains(e.target) && !popupMenu.contains(e.target)) {
+                popupMenu.classList.remove('show');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (popupMenu.classList.contains('show')) {
+                positionPopup();
+            }
+        });
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                currentQueryType = item.dataset.value;
+                popupMenu.classList.remove('show');
+                
+                // 更新查询输入框提示
+                const placeholders = {
+                    'image': '请输入姓名+身份证号',
+                    'video': '请输入姓名+手机号',
+                    'live': '请输入企业名称',
+                    'screenshot': '请输入网易云ID',
+                    'favorite': '请输入银行卡号',
+                    'edited': '请输入车牌号',
+                    'all': '请输入查询内容'
+                };
+                queryInput.placeholder = placeholders[currentQueryType] || '请输入查询内容';
+            });
+        });
+
+        // 点击叉号：关闭搜索栏和查询系统
+        iconClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navWrap.classList.remove('active');
+            querySystem.classList.remove('show');
+            popupMenu.classList.remove('show');
+        });
+
+        // 点击放大镜：第一次显示查询系统，第二次执行查询
+        toggleBtn.addEventListener('click', (e) => {
+            if (e.target === iconClose) return;
+            
+            // 如果查询系统已经显示，执行查询
+            if (querySystem.classList.contains('show')) {
+                executeQuery();
+            } else {
+                // 否则显示查询系统
+                navWrap.classList.add('active');
+                popupMenu.classList.remove('show');
+                querySystem.classList.add('show');
+            }
+        });
+
+        // 点击Get started按钮
+        startBtn.addEventListener('click', () => {
+            iosModal.classList.add('show');
+        });
+
+        // 关闭iOS弹窗
+        function closeModal() {
+            iosModal.classList.remove('show');
+        }
+
+        allowBtn.addEventListener('click', closeModal);
+        
+        denyBtn.addEventListener('click', () => {
+            closeModal();
+            navWrap.classList.add('active');
+            popupMenu.classList.remove('show');
+            querySystem.classList.add('show');
+        });
+
+        // 点击遮罩关闭弹窗
+        iosModal.addEventListener('click', (e) => {
+            if (e.target === iosModal) {
+                closeModal();
+            }
+        });
+
+        // 查询功能
+        async function executeQuery() {
+            const queryText = queryInput.value.trim();
+            if (!queryText) {
+                queryResult.textContent = '请输入查询内容';
+                return;
+            }
+
+            // 禁用输入框
+            queryInput.disabled = true;
+            copyBtn.disabled = true;
+            queryResult.textContent = '正在查询中...';
+
+            try {
+                // 构建请求URL
+                const url = `${API_BASE_URL}?key=${encodeURIComponent(API_KEY)}&cx=${encodeURIComponent(queryText)}&type=${encodeURIComponent(currentQueryType)}`;
+                
+                // 发送请求
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+                }
+
+                // 尝试解析JSON，失败则作为文本处理
+                let result;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                    if (result.code === 200) {
+                        lastResult = result.data || JSON.stringify(result, null, 2);
+                    } else {
+                        throw new Error(result.msg || '查询失败');
+                    }
+                } else {
+                    lastResult = await response.text();
+                }
+
+                queryResult.textContent = lastResult;
+                copyBtn.disabled = false;
+
+                // 保存查询历史
+                saveHistory(queryText);
+
+            } catch (error) {
+                console.error('查询错误:', error);
+                
+                // 跨域错误提示
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    queryResult.textContent = `查询失败：跨域请求被阻止\n\n解决方案：\n1. 请使用后端代理接口进行请求\n2. 或在服务器端配置CORS允许跨域\n\n错误详情：${error.message}`;
+                } else {
+                    queryResult.textContent = `查询失败：${error.message}`;
+                }
+            } finally {
+                // 恢复输入框
+                queryInput.disabled = false;
+                queryInput.focus();
+            }
+        }
+
+        // 回车触发查询
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                executeQuery();
+            }
+        });
+
+        // 复制结果功能
+        copyBtn.addEventListener('click', async () => {
+            if (!lastResult) return;
+            
+            try {
+                await navigator.clipboard.writeText(lastResult);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '已复制';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 1500);
+            } catch (error) {
+                queryResult.textContent += '\n\n复制失败，请手动复制';
+            }
+        });
+
+        // 查询历史记录
+        function saveHistory(text) {
+            // 去重
+            queryHistory = queryHistory.filter(item => item !== text);
+            // 添加到开头
+            queryHistory.unshift(text);
+            // 限制长度
+            if (queryHistory.length > MAX_HISTORY_LENGTH) {
+                queryHistory.pop();
+            }
+            // 保存到localStorage
+            localStorage.setItem('queryHistory', JSON.stringify(queryHistory));
+            // 刷新显示
+            loadHistory();
+        }
+
+        function loadHistory() {
+            if (queryHistory.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+
+            historySection.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            queryHistory.forEach(text => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.textContent = text.length > 15 ? text.substring(0, 15) + '...' : text;
+                item.title = text;
+                item.addEventListener('click', () => {
+                    queryInput.value = text;
+                    queryInput.focus();
+                });
+                historyList.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
