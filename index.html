@@ -277,21 +277,38 @@
         .btn-recruit::after {
             content: '' !important;
             position: absolute !important;
-            top: -30% !important;
-            left: -120% !important;
-            width: 50% !important;
-            height: 160% !important;
+            top: -50% !important;
+            left: -150% !important;
+            width: 40% !important;
+            height: 200% !important;
             background: linear-gradient(105deg,
-                    transparent 30%,
-                    rgba(255,255,255,0.3) 38%,
-                    rgba(255,255,255,0.7) 45%,
-                    rgba(255,255,255,0.9) 50%,
-                    rgba(255,255,255,0.7) 55%,
-                    rgba(255,255,255,0.3) 62%,
-                    transparent 70%) !important;
+                    transparent 25%,
+                    rgba(255,255,255,0.5) 38%,
+                    rgba(255,255,255,1) 50%,
+                    rgba(255,255,255,0.5) 62%,
+                    transparent 75%) !important;
             pointer-events: none !important;
             z-index: 2 !important;
-            animation: shimmerSweep 2s ease-in-out 1.2s infinite !important;
+            animation: recruitShimmer 1.8s ease-in-out 1s infinite !important;
+            filter: blur(1px) !important;
+        }
+        @keyframes recruitShimmer {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
+        .btn-recruit::before {
+            content: '' !important;
+            position: absolute !important;
+            inset: -2px !important;
+            background: linear-gradient(135deg, #fff7b0, #ffe066, #ffd43b, #ffb703, #ffe066, #fff7b0) !important;
+            z-index: -1 !important;
+            opacity: 0 !important;
+            animation: recruitGlow 2s ease-in-out 1s infinite !important;
+            clip-path: polygon(5% 0, 95% 0, 100% 15%, 100% 98%, 0 98%, 0 15%) !important;
+        }
+        @keyframes recruitGlow {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.8; }
         }
         /* 页脚链接区 */
         .footer-links {
