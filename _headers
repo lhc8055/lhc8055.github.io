@@ -1,0 +1,28 @@
+# 缓存配置 - Cloudflare Pages / GitHub Pages 兼容
+# HTML - 不缓存（每次请求最新版本）
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# 静态资源 - 长时间缓存（带哈希版本可设为一年）
+/assets/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+# 音视频文件 - 长时间缓存
+/*.mp3
+  Cache-Control: public, max-age=2592000
+
+/*.mp4
+  Cache-Control: public, max-age=2592000
+
+# 下载文件
+/downloads/*
+  Cache-Control: public, max-age=86400
