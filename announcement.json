@@ -1,5 +1,5 @@
 {
-  "enabled": true,
-  "title": "测试",
-  "content": "123"
+  "enabled": false,
+  "title": "公告",
+  "content": ""
 }
