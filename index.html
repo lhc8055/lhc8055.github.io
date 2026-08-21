@@ -324,6 +324,106 @@
             .bg-ghost-val { font-size: 70px; top: 12%; left: -8%; }
             .header-section { margin-top: 120px; }
             .footer-area { margin-top: 64px; }
+            .announce-modal { max-width: 280px; }
+            .announce-content { font-size: 14px; }
+        }
+        /* 公告弹窗 */
+        .announce-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+            padding: 20px;
+        }
+        .announce-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .announce-modal {
+            position: relative;
+            background: linear-gradient(180deg, #1a2332 0%, #0e141e 100%);
+            border: 1px solid rgba(255, 70, 85, 0.3);
+            max-width: 340px;
+            width: 100%;
+            clip-path: polygon(6% 0, 94% 0, 100% 12%, 100% 92%, 94% 100%, 6% 100%, 0 88%, 0 8%);
+            box-shadow: 0 20px 60px rgba(255, 70, 85, 0.2),
+                        0 0 40px rgba(255, 70, 85, 0.1);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+        .announce-overlay.show .announce-modal {
+            transform: scale(1) translateY(0);
+        }
+        .announce-header {
+            background: linear-gradient(135deg, #FF4655 0%, #e63a48 100%);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .announce-icon {
+            font-size: 20px;
+        }
+        .announce-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        .announce-body {
+            padding: 24px;
+        }
+        .announce-content {
+            color: #c8ccd4;
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .announce-footer {
+            padding: 0 24px 20px;
+            text-align: center;
+        }
+        .announce-tip {
+            color: #5a6070;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .announce-timer {
+            display: inline-block;
+            color: #FF4655;
+            font-weight: 600;
+            min-width: 12px;
+        }
+        .announce-modal::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 50%;
+            height: 200%;
+            background: linear-gradient(105deg,
+                    transparent 30%,
+                    rgba(255,255,255,0.08) 45%,
+                    rgba(255,255,255,0.15) 50%,
+                    rgba(255,255,255,0.08) 55%,
+                    transparent 70%);
+            pointer-events: none;
+            z-index: 10;
+            animation: announceShimmer 2.5s ease-in-out 0.5s infinite;
+        }
+        @keyframes announceShimmer {
+            0% { left: -100%; }
+            100% { left: 120%; }
         }
     </style>
 </head>
@@ -374,5 +474,80 @@
             <div class="riot-brand">—— R I O T ——</div>
         </footer>
     </div>
+
+    <!-- 公告弹窗 -->
+    <div class="announce-overlay" id="announceOverlay">
+        <div class="announce-modal">
+            <div class="announce-header">
+                <span class="announce-icon">📢</span>
+                <span class="announce-title" id="announceTitle">公告</span>
+            </div>
+            <div class="announce-body">
+                <p class="announce-content" id="announceContent"></p>
+            </div>
+            <div class="announce-footer">
+                <p class="announce-tip">点击任意处或 <span class="announce-timer" id="announceTimer">5</span> 秒后自动关闭</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载公告
+        (function() {
+            var overlay = document.getElementById('announceOverlay');
+            var titleEl = document.getElementById('announceTitle');
+            var contentEl = document.getElementById('announceContent');
+            var timerEl = document.getElementById('announceTimer');
+            var countdown = 5;
+            var timer = null;
+            var closed = false;
+
+            function closeAnnounce() {
+                if (closed) return;
+                closed = true;
+                overlay.classList.remove('show');
+                if (timer) clearInterval(timer);
+                try { sessionStorage.setItem('announce_closed_' + (titleEl.textContent || ''), '1'); } catch(e) {}
+            }
+
+            function startCountdown() {
+                timerEl.textContent = countdown;
+                timer = setInterval(function() {
+                    countdown--;
+                    timerEl.textContent = countdown;
+                    if (countdown <= 0) closeAnnounce();
+                }, 1000);
+            }
+
+            overlay.addEventListener('click', function(e) {
+                closeAnnounce();
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeAnnounce();
+            });
+
+            // 加时间戳防止缓存
+            fetch('announcement.json?t=' + Date.now())
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (!data || !data.enabled) return;
+                    // 本次会话已关闭过就不弹了
+                    try {
+                        if (sessionStorage.getItem('announce_closed_' + (data.title || ''))) return;
+                    } catch(e) {}
+                    titleEl.textContent = data.title || '公告';
+                    contentEl.textContent = data.content || '';
+                    // 显示
+                    setTimeout(function() {
+                        overlay.classList.add('show');
+                        startCountdown();
+                    }, 800);
+                })
+                .catch(function() {
+                    // 加载失败就不显示
+                });
+        })();
+    </script>
 </body>
 </html>

@@ -6,6 +6,11 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
 
+# 公告数据 - 不缓存（实时更新）
+/announcement.json
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  X-Content-Type-Options: nosniff
+
 # 静态资源 - 长时间缓存（带哈希版本可设为一年）
 /assets/*.webp
   Cache-Control: public, max-age=31536000, immutable
