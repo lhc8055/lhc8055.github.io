@@ -257,56 +257,39 @@
             gap: 20px;
         }
         /* 招打手按钮 - 显眼金色风格 */
-        .btn-recruit {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 14px 0;
-            background: linear-gradient(135deg, #f6c23e 0%, #e6a817 100%);
-            color: #1a1a2e;
-            font-weight: 800;
-            font-size: 1.15rem;
-            text-decoration: none;
-            clip-path: polygon(5% 0, 95% 0, 100% 15%, 100% 98%, 0 98%, 0 15%);
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-            box-shadow: 0 6px 18px rgba(246, 194, 62, 0.35);
-            letter-spacing: 2px;
+        .btn-animate-4 {
             opacity: 0;
             transform: translateY(35px) scale(0.92) translateZ(0);
             animation: btnSpringIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 1.0s forwards;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        background-color 0.2s ease,
-                        box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            backface-visibility: hidden;
+        }
+        .btn-recruit {
+            background: linear-gradient(135deg, #ffd93d 0%, #ffb347 50%, #ff9f43 100%) !important;
+            color: #2d1b00 !important;
+            font-weight: 800 !important;
+            box-shadow: 0 6px 20px rgba(255, 179, 71, 0.4),
+                        inset 0 1px 0 rgba(255,255,255,0.3) !important;
+            letter-spacing: 4px;
         }
         .btn-recruit:active {
-            transform: translateY(35px) scale(0.95) translateZ(0);
-            background: linear-gradient(135deg, #e6a817 0%, #d4940f 100%);
-            box-shadow: 0 3px 10px rgba(246, 194, 62, 0.5);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            background: linear-gradient(135deg, #ffb347 0%, #ff9f43 50%, #f57c00 100%) !important;
+            box-shadow: 0 3px 12px rgba(255, 159, 67, 0.5) !important;
         }
         .btn-recruit::after {
-            content: '';
-            position: absolute;
-            top: -30%; left: -120%;
-            width: 60%; height: 160%;
+            content: '' !important;
+            position: absolute !important;
+            top: -30% !important;
+            left: -120% !important;
+            width: 60% !important;
+            height: 160% !important;
             background: linear-gradient(105deg,
                     transparent 35%,
-                    rgba(255,255,255,0.15) 40%,
-                    rgba(255,255,255,0.3) 45%,
-                    rgba(255,255,255,0.15) 50%,
-                    transparent 55%);
-            pointer-events: none;
-            z-index: 2;
-            animation: shimmerSweep 2.5s ease-in-out 1.5s infinite;
+                    rgba(255,255,255,0.2) 40%,
+                    rgba(255,255,255,0.4) 45%,
+                    rgba(255,255,255,0.2) 50%,
+                    transparent 55%) !important;
+            pointer-events: none !important;
+            z-index: 2 !important;
+            animation: shimmerSweep 2.5s ease-in-out 1.5s infinite !important;
         }
         /* 页脚链接区 */
         .footer-links {
@@ -404,12 +387,12 @@
                 <img src="assets/feedback.webp" alt="订单反馈" class="icon-img" width="32" height="32" loading="lazy">
                 订单反馈
             </a>
+            <a href="https://qm.qq.com/q/6lbUQX9YZO" class="btn-valo btn-recruit btn-animate-4" rel="noopener">
+                诚招打手陪玩
+            </a>
         </nav>
 
         <footer class="footer-area">
-            <a href="https://qm.qq.com/q/6lbUQX9YZO" class="btn-recruit" rel="noopener">
-                诚招打手陪玩
-            </a>
             <div class="footer-divider"></div>
             <div class="footer-links">
                 <a href="https://m.tb.cn/h.8kXKMOr?tk=q1NkTXqBOMV" rel="noopener">闲鱼店铺</a>
