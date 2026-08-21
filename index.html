@@ -267,48 +267,46 @@
             background: linear-gradient(135deg, #f6c23e 0%, #e6a817 100%);
             color: #1a1a2e;
             font-weight: 800;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             text-decoration: none;
-            border: 2px solid #ffd966;
-            clip-path: polygon(4% 0, 96% 0, 100% 20%, 100% 100%, 0 100%, 0 20%);
-            box-shadow: 0 4px 20px rgba(246, 194, 62, 0.35),
-                        inset 0 1px 0 rgba(255,255,255,0.3);
+            clip-path: polygon(5% 0, 95% 0, 100% 15%, 100% 98%, 0 98%, 0 15%);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 6px 18px rgba(246, 194, 62, 0.35);
             letter-spacing: 2px;
             opacity: 0;
-            transform: translateY(20px);
-            animation: recruitFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.0s forwards;
+            transform: translateY(35px) scale(0.92) translateZ(0);
+            animation: btnSpringIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 1.0s forwards;
             overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        background-color 0.2s ease,
+                        box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            backface-visibility: hidden;
         }
         .btn-recruit:active {
-            transform: translateY(20px) scale(0.96);
-            transition: transform 0.1s ease;
-        }
-        .btn-recruit::before {
-            content: '★';
-            font-size: 1rem;
-            color: #1a1a2e;
+            transform: translateY(35px) scale(0.95) translateZ(0);
+            background: linear-gradient(135deg, #e6a817 0%, #d4940f 100%);
+            box-shadow: 0 3px 10px rgba(246, 194, 62, 0.5);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
         .btn-recruit::after {
             content: '';
             position: absolute;
-            top: -50%; left: -100%;
-            width: 40%; height: 200%;
+            top: -30%; left: -120%;
+            width: 60%; height: 160%;
             background: linear-gradient(105deg,
-                    transparent 30%,
+                    transparent 35%,
+                    rgba(255,255,255,0.15) 40%,
                     rgba(255,255,255,0.3) 45%,
-                    rgba(255,255,255,0.5) 50%,
-                    rgba(255,255,255,0.3) 55%,
-                    transparent 70%);
-            animation: recruitShimmer 2.5s ease-in-out 1.5s infinite;
+                    rgba(255,255,255,0.15) 50%,
+                    transparent 55%);
             pointer-events: none;
-        }
-        @keyframes recruitFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes recruitShimmer {
-            0% { left: -100%; }
-            60%, 100% { left: 150%; }
+            z-index: 2;
+            animation: shimmerSweep 2.5s ease-in-out 1.5s infinite;
         }
         /* 页脚链接区 */
         .footer-links {
@@ -410,7 +408,7 @@
 
         <footer class="footer-area">
             <a href="https://qm.qq.com/q/6lbUQX9YZO" class="btn-recruit" rel="noopener">
-                招打手 · 高薪诚聘
+                诚招打手陪玩
             </a>
             <div class="footer-divider"></div>
             <div class="footer-links">
